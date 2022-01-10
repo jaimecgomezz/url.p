@@ -1,2 +1,0 @@
-# urlp
-simple url parser
