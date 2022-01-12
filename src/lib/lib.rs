@@ -1,4 +1,5 @@
 #[allow(dead_code)]
+mod combinators;
 mod types;
 
 use types::{VResult, URI};
