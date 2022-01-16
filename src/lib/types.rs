@@ -6,10 +6,10 @@ pub struct URI<'a> {
     scheme: Scheme,
     authority: Option<Authority<'a>>,
     resource: Resource,
-    port: Option<u16>,
-    path: Option<Vec<&'a str>>,
+    port: Option<Port>,
+    path: Option<Path<'a>>,
     query: Option<QueryParams<'a>>,
-    fragment: Option<&'a str>,
+    fragment: Option<Fragment<'a>>,
 }
 
 impl URI<'static> {
@@ -49,6 +49,12 @@ pub enum Resource {
     Host(String),
     IP([u8; 4]),
 }
+
+pub type Port = u16;
+
+pub type Path<'a> = Vec<&'a str>;
+
+pub type Fragment<'a> = &'a str;
 
 pub type QueryParam<'a> = (&'a str, &'a str);
 pub type QueryParams<'a> = Vec<QueryParam<'a>>;
