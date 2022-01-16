@@ -29,6 +29,10 @@ pub fn resource(input: &str) -> VResult<&str, Resource> {
     alt((host, ip))(input)
 }
 
+pub fn port(input: &str) -> VResult<&str, Port> {
+    preceded(tag(":"), port_number)(input)
+}
+
 fn host(input: &str) -> VResult<&str, Resource> {
     alt((
         recognize(pair(many1(terminated(hostchar1, tag("."))), alpha1)),
@@ -155,5 +159,14 @@ mod tests {
             ip("192.168.0.1:8080"),
             Ok((":8080", Resource::IP([192, 168, 0, 1])))
         );
+    }
+
+    #[test]
+    fn test_port() {
+        assert!(port("8080").is_err());
+        assert!(port(".8080").is_err());
+        assert!(port(":808080").is_err());
+        assert_eq!(port(":8"), Ok(("", 8)));
+        assert_eq!(port(":8080"), Ok(("", 8080)));
     }
 }
