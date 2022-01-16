@@ -9,6 +9,7 @@ use nom::multi::{count, many1, many_m_n};
 use nom::sequence::{pair, preceded, terminated};
 use nom::Err as NomErr;
 use nom::{AsChar, InputTakeAtPosition};
+use std::str::FromStr;
 
 pub fn schema(input: &str) -> VResult<&str, Scheme> {
     map(
@@ -63,11 +64,19 @@ fn ip(input: &str) -> VResult<&str, Resource> {
     )(input)
 }
 
+fn port_number(input: &str) -> VResult<&str, u16> {
+    custom_number(input, 5)
+}
+
 fn ip_number(input: &str) -> VResult<&str, u8> {
-    match many_m_n(1, 3, one_of("0123456789"))(input) {
+    custom_number(input, 3)
+}
+
+fn custom_number<T: FromStr>(input: &str, max: usize) -> VResult<&str, T> {
+    match many_m_n(1, max, one_of("0123456789"))(input) {
         Ok((next, list)) => {
             let list: String = list.into_iter().collect();
-            match list.parse::<u8>() {
+            match list.parse::<T>() {
                 Ok(parsed) => Ok((next, parsed)),
                 Err(_) => Err(NomErr::Error(VerboseError { errors: vec![] })),
             }
