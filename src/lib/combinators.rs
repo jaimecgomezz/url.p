@@ -90,7 +90,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn schema_t() {
+    fn test_schema() {
         assert!(schema("ftp://").is_err());
         assert!(schema("hhttp://").is_err());
         assert_eq!(Ok(("", Scheme::HTTP)), schema("http://"));
@@ -98,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn authority_t() {
+    fn test_authority() {
         assert!(authority(":@page.com").is_err());
         assert!(authority("username:@page.com").is_err());
         assert!(authority(":password@page.com").is_err());
@@ -113,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn host_t() {
+    fn test_host() {
         assert!(host(".com").is_err());
         assert!(host("$$$.com").is_err());
         assert_eq!(
@@ -138,7 +138,7 @@ mod tests {
     }
 
     #[test]
-    fn ip_t() {
+    fn test_ip() {
         assert!(ip("192.168.0:8080").is_err());
         assert!(ip("999.168.0.0:8080").is_err());
         assert!(ip("1924.168.0.1:8080").is_err());
