@@ -33,6 +33,24 @@ pub fn port(input: &str) -> VResult<&str, Port> {
     preceded(tag(":"), port_number)(input)
 }
 
+pub fn path(input: &str) -> VResult<&str, Path> {
+    map(
+        many1(pair(tag("/"), opt(alt((pathchar1, hostchar1))))),
+        |components: Vec<(&str, Option<&str>)>| {
+            let mut result: Vec<&str> = vec![];
+
+            for (_, possible) in components {
+                if let Some(route) = possible {
+                    println!("{route}");
+                    result.push(route);
+                }
+            }
+
+            return result;
+        },
+    )(input)
+}
+
 fn host(input: &str) -> VResult<&str, Resource> {
     alt((
         recognize(pair(many1(terminated(hostchar1, tag("."))), alpha1)),
@@ -66,7 +84,7 @@ fn pathchar1(input: &str) -> VResult<&str, &str> {
 }
 
 fn is_path_char(input: u8) -> bool {
-    !(is_hostchar(input) || input == b'.')
+    !(is_alphanumeric(input) || input == b'-' || input == b'.')
 }
 
 fn is_hostchar(input: u8) -> bool {
@@ -180,5 +198,17 @@ mod tests {
         assert!(port(":808080").is_err());
         assert_eq!(port(":8"), Ok(("", 8)));
         assert_eq!(port(":8080"), Ok(("", 8080)));
+    }
+
+    #[test]
+    fn test_path() {
+        assert_eq!(path("/a/b/c?d"), Ok(("?d", vec!["a", "b", "c"])));
+        assert_eq!(path("/a/b/c/?d"), Ok(("?d", vec!["a", "b", "c"])));
+        assert_eq!(path("/a/b-c-d/c/?d"), Ok(("?d", vec!["a", "b-c-d", "c"])));
+        assert_eq!(path("/a/1234/c/?d"), Ok(("?d", vec!["a", "1234", "c"])));
+        assert_eq!(
+            path("/a/1234/c.txt?d"),
+            Ok(("?d", vec!["a", "1234", "c.txt"]))
+        );
     }
 }
