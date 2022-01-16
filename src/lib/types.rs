@@ -5,7 +5,7 @@ use nom::IResult;
 pub struct URI<'a> {
     scheme: Scheme,
     authority: Option<Authority<'a>>,
-    host: Host,
+    resource: Resource,
     port: Option<u16>,
     path: Option<Vec<&'a str>>,
     query: Option<QueryParams<'a>>,
@@ -17,7 +17,7 @@ impl URI<'static> {
         URI {
             scheme: Scheme::HTTP,
             authority: Some(("username", Some("password"))),
-            host: Host::IP([127, 0, 0, 1]),
+            resource: Resource::IP([127, 0, 0, 1]),
             port: Some(80),
             path: Some(vec!["some", "important", "path"]),
             query: Some(vec![("a", "1")]),
@@ -45,7 +45,7 @@ impl From<&str> for Scheme {
 pub type Authority<'a> = (&'a str, Option<&'a str>);
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Host {
+pub enum Resource {
     Host(String),
     IP([u8; 4]),
 }
