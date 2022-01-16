@@ -46,15 +46,27 @@ fn host(input: &str) -> VResult<&str, Resource> {
     })
 }
 
-pub fn hostchar1<T>(input: T) -> VResult<T, T>
+fn customchars1<T>(input: T, validate: &dyn Fn(u8) -> bool) -> VResult<T, T>
 where
     T: InputTakeAtPosition,
     <T as InputTakeAtPosition>::Item: AsChar,
 {
     input.split_at_position1_complete(
-        |item| is_hostchar(item.as_char() as u8),
+        |item| validate(item.as_char() as u8),
         ErrorKind::AlphaNumeric,
     )
+}
+
+fn hostchar1(input: &str) -> VResult<&str, &str> {
+    customchars1(input, &is_hostchar)
+}
+
+fn pathchar1(input: &str) -> VResult<&str, &str> {
+    customchars1(input, &is_path_char)
+}
+
+fn is_path_char(input: u8) -> bool {
+    !(is_hostchar(input) || input == b'.')
 }
 
 fn is_hostchar(input: u8) -> bool {
