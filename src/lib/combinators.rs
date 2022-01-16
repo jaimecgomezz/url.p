@@ -5,8 +5,8 @@ use nom::character::complete::{alpha1, alphanumeric1, one_of};
 use nom::character::is_alphanumeric;
 use nom::combinator::{map, opt, recognize};
 use nom::error::{ErrorKind, VerboseError};
-use nom::multi::{count, many1, many_m_n};
-use nom::sequence::{pair, preceded, terminated};
+use nom::multi::{count, many0, many1, many_m_n};
+use nom::sequence::{pair, preceded, separated_pair, terminated};
 use nom::Err as NomErr;
 use nom::{AsChar, InputTakeAtPosition};
 use std::str::FromStr;
@@ -49,6 +49,29 @@ pub fn path(input: &str) -> VResult<&str, Path> {
             return result;
         },
     )(input)
+}
+
+pub fn query(input: &str) -> VResult<&str, QueryParams> {
+    // Ok(("", vec![]))
+    map(
+        preceded(
+            tag("?"),
+            pair(query_pair, many0(preceded(tag("&"), query_pair))),
+        ),
+        |(first, rest)| {
+            let mut result = vec![first];
+
+            for pair in rest {
+                result.push(pair);
+            }
+
+            return result;
+        },
+    )(input)
+}
+
+fn query_pair(input: &str) -> VResult<&str, (&str, &str)> {
+    separated_pair(hostchar1, tag("="), hostchar1)(input)
 }
 
 fn host(input: &str) -> VResult<&str, Resource> {
@@ -209,6 +232,19 @@ mod tests {
         assert_eq!(
             path("/a/1234/c.txt?d"),
             Ok(("?d", vec!["a", "1234", "c.txt"]))
+        );
+    }
+
+    #[test]
+    fn test_query_params() {
+        assert_eq!(
+            query("?bla=5&blub=val#yay"),
+            Ok(("#yay", vec![("bla", "5"), ("blub", "val")]))
+        );
+
+        assert_eq!(
+            query("?bla-blub=arr-arr#yay"),
+            Ok(("#yay", vec![("bla-blub", "arr-arr"),]))
         );
     }
 }
