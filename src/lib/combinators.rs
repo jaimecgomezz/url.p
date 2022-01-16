@@ -11,7 +11,7 @@ use nom::Err as NomErr;
 use nom::{AsChar, InputTakeAtPosition};
 use std::str::FromStr;
 
-pub fn schema(input: &str) -> VResult<&str, Scheme> {
+pub fn scheme(input: &str) -> VResult<&str, Scheme> {
     map(
         alt((tag_no_case("http://"), tag_no_case("https://"))),
         |result: &str| result.into(),
@@ -149,11 +149,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_schema() {
-        assert!(schema("ftp://").is_err());
-        assert!(schema("hhttp://").is_err());
-        assert_eq!(Ok(("", Scheme::HTTP)), schema("http://"));
-        assert_eq!(Ok(("", Scheme::HTTPS)), schema("https://"));
+    fn test_scheme() {
+        assert!(scheme("ftp://").is_err());
+        assert!(scheme("hhttp://").is_err());
+        assert_eq!(Ok(("", Scheme::HTTP)), scheme("http://"));
+        assert_eq!(Ok(("", Scheme::HTTPS)), scheme("https://"));
     }
 
     #[test]

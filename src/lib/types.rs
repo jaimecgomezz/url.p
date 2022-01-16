@@ -3,27 +3,13 @@ use nom::IResult;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct URI<'a> {
-    scheme: Scheme,
-    authority: Option<Authority<'a>>,
-    resource: Resource,
-    port: Option<Port>,
-    path: Option<Path<'a>>,
-    query: Option<QueryParams<'a>>,
-    fragment: Option<Fragment<'a>>,
-}
-
-impl URI<'static> {
-    pub fn new() -> Self {
-        URI {
-            scheme: Scheme::HTTP,
-            authority: Some(("username", Some("password"))),
-            resource: Resource::IP([127, 0, 0, 1]),
-            port: Some(80),
-            path: Some(vec!["some", "important", "path"]),
-            query: Some(vec![("a", "1")]),
-            fragment: Some("fragment"),
-        }
-    }
+    pub scheme: Scheme,
+    pub authority: Option<Authority<'a>>,
+    pub resource: Resource,
+    pub port: Option<Port>,
+    pub path: Option<Path<'a>>,
+    pub query: Option<QueryParams<'a>>,
+    pub fragment: Option<Fragment<'a>>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
