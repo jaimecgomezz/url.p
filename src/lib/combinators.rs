@@ -52,7 +52,6 @@ pub fn path(input: &str) -> VResult<&str, Path> {
 }
 
 pub fn query(input: &str) -> VResult<&str, QueryParams> {
-    // Ok(("", vec![]))
     map(
         preceded(
             tag("?"),
@@ -68,6 +67,10 @@ pub fn query(input: &str) -> VResult<&str, QueryParams> {
             return result;
         },
     )(input)
+}
+
+pub fn fragment(input: &str) -> VResult<&str, Fragment> {
+    preceded(tag("#"), hostchar1)(input)
 }
 
 fn query_pair(input: &str) -> VResult<&str, (&str, &str)> {
@@ -246,5 +249,11 @@ mod tests {
             query("?bla-blub=arr-arr#yay"),
             Ok(("#yay", vec![("bla-blub", "arr-arr"),]))
         );
+    }
+
+    #[test]
+    fn test_fragment() {
+        assert_eq!(fragment("#bla"), Ok(("", "bla")));
+        assert_eq!(fragment("#bla-blub"), Ok(("", "bla-blub")));
     }
 }
