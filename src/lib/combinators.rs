@@ -35,13 +35,12 @@ pub fn port(input: &str) -> VResult<&str, Port> {
 
 pub fn path(input: &str) -> VResult<&str, Path> {
     map(
-        many1(pair(tag("/"), opt(alt((pathchar1, hostchar1))))),
+        many1(pair(tag("/"), opt(pathchar1))),
         |components: Vec<(&str, Option<&str>)>| {
             let mut result: Vec<&str> = vec![];
 
             for (_, possible) in components {
                 if let Some(route) = possible {
-                    println!("{route}");
                     result.push(route);
                 }
             }
@@ -73,10 +72,6 @@ pub fn fragment(input: &str) -> VResult<&str, Fragment> {
     preceded(tag("#"), hostchar1)(input)
 }
 
-fn query_pair(input: &str) -> VResult<&str, (&str, &str)> {
-    separated_pair(hostchar1, tag("="), hostchar1)(input)
-}
-
 fn host(input: &str) -> VResult<&str, Resource> {
     alt((
         recognize(pair(many1(terminated(hostchar1, tag("."))), alpha1)),
@@ -90,15 +85,15 @@ fn host(input: &str) -> VResult<&str, Resource> {
     })
 }
 
-fn customchars1<T>(input: T, validate: &dyn Fn(u8) -> bool) -> VResult<T, T>
-where
-    T: InputTakeAtPosition,
-    <T as InputTakeAtPosition>::Item: AsChar,
-{
-    input.split_at_position1_complete(
-        |item| validate(item.as_char() as u8),
-        ErrorKind::AlphaNumeric,
-    )
+fn ip(input: &str) -> VResult<&str, Resource> {
+    map(
+        pair(ip_number, count(preceded(tag("."), ip_number), 3)),
+        |(first, rest): (u8, Vec<u8>)| Resource::IP([first, rest[0], rest[1], rest[2]]),
+    )(input)
+}
+
+fn port_number(input: &str) -> VResult<&str, u16> {
+    custom_number(input, 5)
 }
 
 fn hostchar1(input: &str) -> VResult<&str, &str> {
@@ -109,23 +104,8 @@ fn pathchar1(input: &str) -> VResult<&str, &str> {
     customchars1(input, &is_path_char)
 }
 
-fn is_path_char(input: u8) -> bool {
-    !(is_alphanumeric(input) || input == b'-' || input == b'.')
-}
-
-fn is_hostchar(input: u8) -> bool {
-    !(is_alphanumeric(input) || input == b'-')
-}
-
-fn ip(input: &str) -> VResult<&str, Resource> {
-    map(
-        pair(ip_number, count(preceded(tag("."), ip_number), 3)),
-        |(first, rest): (u8, Vec<u8>)| Resource::IP([first, rest[0], rest[1], rest[2]]),
-    )(input)
-}
-
-fn port_number(input: &str) -> VResult<&str, u16> {
-    custom_number(input, 5)
+fn query_pair(input: &str) -> VResult<&str, (&str, &str)> {
+    separated_pair(hostchar1, tag("="), hostchar1)(input)
 }
 
 fn ip_number(input: &str) -> VResult<&str, u8> {
@@ -145,6 +125,25 @@ fn custom_number<T: FromStr>(input: &str, max: usize) -> VResult<&str, T> {
     }
 }
 
+fn customchars1<T>(input: T, validate: &dyn Fn(u8) -> bool) -> VResult<T, T>
+where
+    T: InputTakeAtPosition,
+    <T as InputTakeAtPosition>::Item: AsChar,
+{
+    input.split_at_position1_complete(
+        |item| validate(item.as_char() as u8),
+        ErrorKind::AlphaNumeric,
+    )
+}
+
+fn is_hostchar(input: u8) -> bool {
+    !(is_alphanumeric(input) || input == b'-')
+}
+
+fn is_path_char(input: u8) -> bool {
+    !(is_alphanumeric(input) || input == b'-' || input == b'.')
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -159,17 +158,18 @@ mod tests {
 
     #[test]
     fn test_authority() {
-        assert!(authority(":@page.com").is_err());
-        assert!(authority("username:@page.com").is_err());
-        assert!(authority(":password@page.com").is_err());
         assert_eq!(
-            authority("username@page.com"),
-            Ok(("page.com", ("username", None)))
+            authority("username:password@zupzup.org"),
+            Ok(("zupzup.org", ("username", Some("password"))))
         );
         assert_eq!(
-            authority("username:password@page.com"),
-            Ok(("page.com", ("username", Some("password"))))
+            authority("username@zupzup.org"),
+            Ok(("zupzup.org", ("username", None)))
         );
+        assert!(authority("zupzup.org").is_err());
+        assert!(authority(":zupzup.org").is_err());
+        assert!(authority("@zupzup.org").is_err());
+        assert!(authority("username:passwordzupzup.org").is_err());
     }
 
     #[test]
